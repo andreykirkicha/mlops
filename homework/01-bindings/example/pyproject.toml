@@ -1,0 +1,15 @@
+[build-system]
+requires = ["scikit-build-core==1.0.3", "pybind11==3.1.0"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "mlops-binding-demo"
+version = "0.1.0"
+description = "A complete scalar binding example, not the homework solution"
+requires-python = ">=3.13"
+
+[tool.scikit-build]
+cmake.version = "==4.4.3"
+ninja.version = "==1.13.2"
+wheel.packages = ["src/binding_demo"]
+sdist.include = ["CMakeLists.txt", "cpp/**", "src/**", "tests/**"]

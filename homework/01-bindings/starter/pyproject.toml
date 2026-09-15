@@ -1,0 +1,17 @@
+[build-system]
+requires = ["scikit-build-core==1.0.3", "pybind11==3.1.0"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "mlops-tensor-ops"
+version = "0.1.0"
+description = "TODO: describe your tensor operation and its contract"
+requires-python = ">=3.13"
+# TODO 3: declare NumPy as a runtime dependency (course version: 2.5.3).
+dependencies = []
+
+[tool.scikit-build]
+cmake.version = "==4.4.3"
+ninja.version = "==1.13.2"
+wheel.packages = ["src/tensor_ops"]
+sdist.include = ["CMakeLists.txt", "cpp/**", "src/**"]
