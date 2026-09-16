@@ -12,6 +12,7 @@
 - `tests/` — выданные проверки; свои тесты добавляйте в `starter/tests/test_student.py`.
 - `requirements-lock.txt` — проверенный снимок env; `starter/pyproject.toml` — метаданные и сборка пакета.
 - `prepare_data.py` — повторная подготовка данных; во время занятия не требуется.
+- `check-wheel.sh` — проверка установки wheel и предсказаний в отдельном env.
 
 Валидация входов, CLI, сохранение bundle и паспорт запуска уже реализованы.
 Полного решения пакета в репозитории нет. Готовый notebook служит подсказкой,
@@ -71,7 +72,7 @@ timestamps должны исключаться, исходный `frame` не д
 Подсказка — `labeled_cohort` в notebook.
 
 ```bash
-# Все следующие команды — из starter/, с активным env.
+# Из practice/ переходим в папку пакета; env остаётся активным.
 cd starter
 python -m pytest -c pyproject.toml ../tests -q -k training_filter
 ```
@@ -108,14 +109,13 @@ python -m pytest -c pyproject.toml tests ../tests -q
 
 ## Запуск результата
 
-Из `starter/` после заполнения TODO:
+Из `starter/` после заполнения TODO, с активным env:
 
 ```bash
 taxi-duration train --train ../data/train.parquet \
   --validation ../data/validation.parquet --output artifacts
 taxi-duration predict --model artifacts/model.pkl \
   --input ../data/inference.csv --output predictions.csv
-python -m build --wheel --no-isolation
 ```
 
 В `artifacts/` находятся `model.pkl`, `metrics.json`, `run.json`. Откройте метрики:
@@ -127,37 +127,48 @@ python -m build --wheel --no-isolation
 python -c 'import pandas as pd, numpy as np; src=pd.read_csv("../data/inference.csv", dtype={"ride_id": str}); out=pd.read_csv("predictions.csv", dtype={"ride_id": str}); assert out.ride_id.tolist()==src.ride_id.tolist(); assert np.isfinite(out.predicted_duration).all(); print(len(out), "строк; ID и ответы проверены")'
 ```
 
-Wheel содержит код, bundle — обученное состояние. Загружайте pickle только из
-собственного доверенного запуска: он может выполнять код. Проверка версии после
-загрузки не защищает от вредоносного файла. Используем ту же версию sklearn.
+## Сборка
 
-### Совместная проверка wheel и самостоятельное повторение
-
-Этот этап на занятии выполняем вместе. Для самостоятельного повторения нужны
-новое окружение и установка зависимостей; сетевое ожидание не входит в задания пары.
-Команды для POSIX, начало — в `starter/`, после train/predict/build:
+Из папки пакета, в том же env:
 
 ```bash
-course_package="$PWD"
-course_practice="$(cd .. && pwd)"
-course_receiver=$(mktemp -d)
-python3.13 -m venv "$course_receiver/venv"
-"$course_receiver/venv/bin/python" -m pip install -r "$course_practice/requirements-lock.txt"
-env -u PYTHONPATH "$course_receiver/venv/bin/python" -m pip install --no-deps \
-  "$course_package/dist/taxi_duration_course-0.1.0-py3-none-any.whl"
-(
-  cd "$course_receiver"
-  env -u PYTHONPATH "$course_receiver/venv/bin/python" -c 'import taxi_duration; print(taxi_duration.__file__)'
-  env -u PYTHONPATH "$course_receiver/venv/bin/taxi-duration" predict \
-    --model "$course_package/artifacts/model.pkl" \
-    --input "$course_practice/data/inference.csv" --output predictions.csv
-  env -u PYTHONPATH "$course_receiver/venv/bin/python" -c 'import sys, pandas as pd, numpy as np; a=pd.read_csv(sys.argv[1], dtype={"ride_id": str}); b=pd.read_csv("predictions.csv", dtype={"ride_id": str}); assert a.ride_id.tolist()==b.ride_id.tolist(); np.testing.assert_allclose(a.predicted_duration, b.predicted_duration, rtol=1e-10, atol=1e-10); print("Wheel: ID и предсказания совпадают")' "$course_package/predictions.csv"
-)
+python -m build --wheel --no-isolation
 ```
 
-Импорт должен указывать на `site-packages` нового env, не на `src`. Интеграционный
-тест CLI из выданного набора подставляет исходники через PYTHONPATH: он проверяет
-код, но не заменяет реальное предсказание из установленного wheel.
+Wheel появится в `dist/`. Он содержит код; bundle в `artifacts/model.pkl` —
+обученную модель и vectorizer. Загружайте pickle только из собственного доверенного
+запуска: он может выполнять код. Проверка версии после загрузки не защищает
+от вредоносного файла. Используем ту же версию sklearn.
+
+## Проверка wheel в отдельном env
+
+После обучения, предсказания и сборки запустите
+[check-wheel.sh](check-wheel.sh)
+из `starter/`:
+
+```bash
+bash ../check-wheel.sh
+```
+
+Скрипт сам определяет пути к `starter/` и папке практики относительно своего
+расположения. Переменные в терминале задавать не нужно.
+
+Перед запуском должны существовать `dist/taxi_duration_course-0.1.0-py3-none-any.whl`,
+`artifacts/model.pkl` и `predictions.csv` в папке пакета. Скрипт использует эти
+имена; если вы выбрали другие пути, скорректируйте их в скрипте.
+
+Скрипт создаёт новый временный env на Python 3.13, устанавливает зависимости
+из `requirements-lock.txt` и wheel, затем выполняет predict вне исходников.
+Проверяет импорт из `site-packages`, совпадение ID и порядка строк, а также
+предсказаний с допуском `rtol=1e-10`, `atol=1e-10`. При ошибке останавливается.
+Для установки зависимостей нужен доступ к серверу пакетов.
+
+При успешной проверке появится сообщение `Wheel: ID и предсказания совпадают`.
+Исходные модель и CSV не перезаписываются. Временный env и проверочный CSV
+остаются по пути, который скрипт печатает в начале.
+
+Интеграционный тест CLI подставляет исходники через `PYTHONPATH`: он проверяет
+код, но не заменяет предсказание из установленного wheel.
 
 ## Данные, контракты и ограничения
 
