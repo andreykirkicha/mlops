@@ -1,0 +1,32 @@
+{
+  "dataset": "NYC TLC Green Taxi",
+  "seed": 2026,
+  "sampling": "Exact pickup month, then pandas sample(random_state=2026), sorted by pickup time",
+  "pandas_version": "3.0.5",
+  "requested_rows_per_month": 10000,
+  "source_page": "https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page",
+  "files": {
+    "train.parquet": {
+      "source_url": "https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2021-01.parquet",
+      "source_sha256": "b8e2c9496c5eada0f10adbd88f98d91721ec6fe2787a2b355cf0ccfa9678ee7b",
+      "source_rows": 76518,
+      "month_rows": 76515,
+      "rows": 10000,
+      "sha256": "93a28fc697f62c5389d347f180be80dce730dc461ef688a5bf90b6ae935528a0"
+    },
+    "validation.parquet": {
+      "source_url": "https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2021-02.parquet",
+      "source_sha256": "fd43c7afa2002716c8afadfd57665ab9c9ad99be419570a9b0a08de15cbeb64e",
+      "source_rows": 64572,
+      "month_rows": 64570,
+      "rows": 10000,
+      "sha256": "7921d4b24c20d84910bfa783c0563b4c145962513cf8aed4ac0633d176997173"
+    },
+    "inference.csv": {
+      "rows": 20,
+      "sha256": "b920700d9b042b011506f150ecd87cb8c2dd59a23ca003e71bb78d7c27160e98",
+      "derived_from": "validation.parquet",
+      "selection": "first 20 rows; no target or timestamps"
+    }
+  }
+}
