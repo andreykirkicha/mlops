@@ -66,9 +66,10 @@ cd ..
 ### 1. Duration и обучающая когорта
 
 В `starter/src/taxi_duration/data.py`, функция `prepare_training_data`:
-вход уже скопирован в `result`, timestamps приведены к datetime. Вычислите
-`duration` в минутах и оставьте диапазон `[1, 60]` включительно. Невалидные
-timestamps должны исключаться, исходный `frame` не должен изменяться.
+создайте копию `frame` в переменной `result`. Приведите колонки `PICKUP` и
+`DROPOFF` к datetime через `pd.to_datetime(..., errors="coerce")`.
+Вычислите `duration` в минутах и оставьте диапазон `[1, 60]` включительно.
+Невалидные timestamps должны исключаться, исходный `frame` не должен изменяться.
 Подсказка — `labeled_cohort` в notebook.
 
 ```bash
@@ -77,17 +78,22 @@ cd starter
 python -m pytest -c pyproject.toml ../tests -q -k training_filter
 ```
 
-### 2. Fit только на train
+### 2. Признаки и обучение модели
 
-В `starter/src/taxi_duration/model.py`, функция `train_model`: определите
-`x_train` и `x_validation`, используя созданный `vectorizer` и `prepare_features`.
-Словарь признаков обучается только на train; validation использует тот же словарь.
+В `starter/src/taxi_duration/model.py`, функция `train_model`: создайте
+`vectorizer` — `DictVectorizer(sparse=True)`. Определите `x_train` и `x_validation`
+через `prepare_features` и методы vectorizer. Словарь признаков обучается только
+на train; validation использует тот же словарь. Создайте `model` — `LinearRegression()`
+и обучите её на `x_train` с целевой переменной `train.duration.to_numpy()`.
 
 ### 3. Предсказание
 
-В `predict` определите `features` из готовых `records` и обученного vectorizer
-в bundle. Используйте только transform. Не требуйте target, не фильтруйте строки
-и не меняйте порядок. Обработка пустого входа уже реализована.
+В `predict` получите `records` через `prepare_features(frame)`. Если список пуст,
+верните пустой NumPy-массив с `dtype=float`. В остальных случаях определите
+`features` через `transform` обученного `bundle["vectorizer"]`, вызовите
+`predict` модели из bundle и сохраните прогнозы в `result` через
+`np.asarray(..., dtype=float)`. Не вызывайте fit, не требуйте target,
+не фильтруйте строки и не меняйте их порядок. Проверка результата уже реализована.
 
 ```bash
 python -m pytest -c pyproject.toml ../tests -q -k 'validation_does_not_refit or empty_training'

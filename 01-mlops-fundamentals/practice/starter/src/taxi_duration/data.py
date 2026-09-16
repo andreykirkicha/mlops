@@ -43,11 +43,11 @@ def prepare_training_data(frame):
     at prediction time the actual duration is unknown.
     """
     require_columns(frame, (*FEATURES, PICKUP, DROPOFF))
-    result = frame.copy()
-    for name in (PICKUP, DROPOFF):
-        result[name] = pd.to_datetime(result[name], errors="coerce")
-    # TODO 1: duration in minutes; keep [1, 60] inclusive.
-    # Use result (a copy); invalid timestamps have already become NaT.
+    # TODO 1: подготовьте result, не изменяя исходный frame.
+    # Создайте копию; приведите PICKUP и DROPOFF к datetime через
+    # pd.to_datetime(..., errors="coerce"): некорректные значения станут NaT.
+    # Вычислите duration в минутах и оставьте [1, 60] включительно.
+    # Строки с NaT не должны попасть в результат.
     raise NotImplementedError("Exercise 1: duration and training cohort")
     prepare_features(result)  # Validate before any model can consume these rows.
     return result
