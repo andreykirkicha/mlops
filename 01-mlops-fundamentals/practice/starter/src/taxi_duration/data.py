@@ -52,6 +52,8 @@ def prepare_training_data(frame):
     # Вычислите duration в минутах и оставьте [1, 60] включительно.
     # Строки с NaT не должны попасть в результат.
 
+    result = frame.copy()
+
     result[PICKUP] = pd.to_datetime(result[PICKUP], errors="coerce")
     result[DROPOFF] = pd.to_datetime(result[DROPOFF], errors="coerce")
 
